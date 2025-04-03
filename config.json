@@ -1,0 +1,17 @@
+{
+	"listening_port": 11411,
+	"llmrouter_api_key_env": "LLMROUTER_API_KEY",
+	"aliases": {
+		"gemma3": "ollama/gemma3:1b"
+	},
+	"backends": [
+		{
+			"name": "ollama",
+			"base_url": "http://localhost:11434/v1",
+			"prefix": "ollama/",
+			"role_rewrites": {
+				"developer": "system"
+			}
+		}
+	]
+}

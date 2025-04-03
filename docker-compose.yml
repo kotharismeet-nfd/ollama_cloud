@@ -1,0 +1,19 @@
+services:
+  ollama:
+    build: ollama
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    ports:
+      - "11411:11411"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTH_TOKEN}
+    command: ["http", "11411"]
+
+  llm-router-local:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - ollama
+      - ngrok
