@@ -21,7 +21,7 @@ https://github.com/kcolemangt/llm-router/assets/20099734/7220a3ac-11c5-4c89-984a
 ## Getting Started
 
 1. Edit your configuration file:
-   - This file defines which LLM backends are available and how to route to them
+   - config.json file defines which LLM backends are available and how to route to them
 
 2. Launch LLM-router to manage API requests across multiple backends:
 ```sh
@@ -46,9 +46,7 @@ ngrok http 11411
 
 5. Define your preferred models in Cursor using the appropriate prefixes:
 ```
-ollama/phi4
-openai/gpt-4o-mini
-groq/deepseek-r1-distill-llama-70b-specdec
+ollama/gemma3:1b
 ```
 
 ⚠️ **Important Warning**: When clicking "Verify", Cursor randomly selects one of your enabled models to test the connection. Make sure to **uncheck any models** in Cursor's model list that aren't provided by the backends configured in your `config.json`. Otherwise, verification may fail if Cursor tries to test a model that's not available through your LLM-router.
@@ -61,18 +59,9 @@ Here is an example of how to configure Groq, Ollama, and OpenAI backends in `con
 	"listening_port": 11411,
 	"llmrouter_api_key_env": "LLMROUTER_API_KEY",
 	"aliases": {
-		"o1": "groq/deepseek-r1-distill-qwen-32b",
-		"o3-mini": "ollama/qwq"
+		"gemma3": "ollama/gemma3:1b"
 	},
 	"backends": [
-		{
-			"name": "openai",
-			"base_url": "https://api.openai.com/v1",
-			"prefix": "openai/",
-			"default": true,
-			"require_api_key": true,
-			"key_env_var": "OPENAI_API_KEY"
-		},
 		{
 			"name": "ollama",
 			"base_url": "http://localhost:11434/v1",
@@ -80,23 +69,10 @@ Here is an example of how to configure Groq, Ollama, and OpenAI backends in `con
 			"role_rewrites": {
 				"developer": "system"
 			}
-		},
-		{
-			"name": "groq",
-			"base_url": "https://api.groq.com/openai/v1",
-			"prefix": "groq/",
-			"require_api_key": true,
-			"key_env_var": "GROQ_API_KEY",
-			"role_rewrites": {
-				"developer": "system"
-			}
 		}
 	]
 }
-
 ```
-
-In this configuration, OpenAI serves as the default backend, allowing you to use model identifiers like `openai/gpt-4o-mini` or simply `gpt-4o-mini`. Models on Ollama and Groq, however, must be prefixed with `ollama/` and `groq/` respectively. This configuration also causes Cursor to send optimized reasoning prompts to Groq's `deepseek-r1-distill-llama-70b-specdec` model and the local Ollama `qwq` model.
 
 ### Optimizing for Reasoning Models and Prompt Techniques
 
@@ -115,10 +91,6 @@ Simple example:
     "o1": "groq/deepseek-r1-distill-llama-70b-specdec"
 }
 ```
-
-In this example:
-- Cursor sends prompts optimized for OpenAI's `o1`, but LLM-router redirects these requests to Groq's reasoning-focused model `deepseek-r1-distill-llama-70b-specdec`.
-- The Groq backend benefits from Cursor's specialized reasoning prompts originally intended for `gpt-4-turbo`.
 
 #### Role Rewrites
 
@@ -150,49 +122,9 @@ In this example:
 - The parameter `reasoning_effort` will be automatically removed from requests before forwarding to this backend.
 - This is particularly useful when aliases direct Cursor-optimized prompts (which may include provider-specific parameters) to different backends that don't support those parameters.
 
-#### Combined Example: Aliases, Role Rewrites, and Unsupported Parameters
-
-Here's a complete configuration example illustrating how these features are used together:
-
-```json
-{
-	"listening_port": 11411,
-	"llmrouter_api_key_env": "LLMROUTER_API_KEY",
-	"aliases": {
-		"o1": "groq/deepseek-r1-distill-qwen-32b",
-		"o3-mini": "ollama/qwq"
-	},
-	"backends": [
-		{
-			"name": "groq",
-			"base_url": "https://api.groq.com/openai/v1",
-			"prefix": "groq/",
-			"require_api_key": true,
-			"key_env_var": "GROQ_API_KEY",
-			"role_rewrites": {
-				"developer": "system"
-			},
-			"unsupported_params": [
-				"reasoning_effort"
-			]
-		},
-		{
-			"name": "ollama",
-			"base_url": "http://localhost:11434/v1",
-			"prefix": "ollama/",
-			"role_rewrites": {
-				"developer": "system"
-			}
-		}
-	]
-}
-```
-
 In this configuration:
-- Requests to `o1` from Cursor go to Groq's reasoning-oriented model `deepseek-r1-distill-llama-70b-specdec`.
-- Requests to `o3-mini` go to the local Ollama model `qwq`.
+- Requests to `gemma3` go to the local Ollama model `llama/gemma3:1b`.
 - Both backends use role rewriting to map Cursor's custom `developer` role to the standard `system` role.
-- The Groq backend drops the `reasoning_effort` parameter, which is not supported by Groq's API.
 
 #### Additional Uses
 
@@ -202,12 +134,12 @@ These features are not limited to reasoning models. They can be applied broadly 
 
 Provide the necessary API keys via environment variables:
 ```sh
-OPENAI_API_KEY=<YOUR_OPENAI_KEY> GROQ_API_KEY=<YOUR_GROQ_KEY> ./llm-router-darwin-arm64
+OPENAI_API_KEY=<YOUR_OPENAI_KEY> ./llm-router-darwin-arm64
 ```
 
 If you wish to specify your own LLM-router API key instead of using a generated one:
 ```sh
-LLMROUTER_API_KEY=your_custom_key GROQ_API_KEY=<YOUR_GROQ_KEY> ./llm-router-darwin-arm64
+LLMROUTER_API_KEY=your_custom_key ./llm-router-darwin-arm64
 ```
 
 Alternatively, you can use the command-line flag:
@@ -245,44 +177,7 @@ Requests to LLM-router are secured with your `LLMROUTER_API_KEY` which you set i
 
 When attempting to run LLM-router on MacOS, you may encounter permissions errors due to MacOS's Gatekeeper security feature. Here are several methods to resolve these issues and successfully launch the application.
 
-### Method 1: Modify Permissions via Terminal
-If you receive a warning about permissions after downloading the release binary, change the file's permissions to make it executable:
-
-```sh
-chmod +x llm-router-darwin-arm64
-./llm-router-darwin-arm64
-```
-
-### Method 2: Use the `spctl` Command
-If the above does not resolve the issue and you still face security pop-ups:
-
-1. Add the application to the allowed list using:
-   ```sh
-   sudo spctl --add llm-router-darwin-arm64
-   ```
-
-2. Attempt to run the application again:
-   ```sh
-   ./llm-router-darwin-arm64
-   ```
-
-### Method 3: Open Directly from Finder
-For issues persisting beyond previous steps:
-
-1. Find `llm-router-darwin-arm64` in Finder.
-2. Control-click on the app icon and select 'Open' from the context menu.
-3. In the dialog that appears, click 'Open'. Admin users may need to authenticate.
-
-This step should register the application as a trusted entity on your Mac, bypassing Gatekeeper on subsequent launches.
-
-### Method 4: Manual Override in System Preferences
-Should the above methods fail:
-
-1. Open System Preferences and navigate to Security & Privacy.
-2. Under the 'General' tab, you may see an 'Allow Anyway' button next to a message about LLM-router.
-3. Click 'Allow Anyway' and try running the application again.
-
-### Method 5: Build from Source
+### Build from Source
 If none of the above methods work, consider building the application from source:
 
 1. Download the source code.
@@ -292,9 +187,3 @@ If none of the above methods work, consider building the application from source
    make
    ./build/llm-router-local
    ```
-
-## Connect
-
-* X (twitter) [@kcolemangt](https://x.com/kcolemangt)
-
-* LinkedIn [Keith](https://www.linkedin.com/in/keithcoleman/)
