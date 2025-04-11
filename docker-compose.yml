@@ -1,19 +1,26 @@
+version: "3.8"
+
 services:
   ollama:
-    build: ollama
-
-  ngrok:
-    image: ngrok/ngrok:latest
+    build:
+      context: ollama
+    container_name: ollama
     ports:
-      - "11411:11411"
-    environment:
-      NGROK_AUTHTOKEN: ${NGROK_AUTH_TOKEN}
-    command: ["http", "11411"]
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
 
   llm-router-local:
     build: .
+    container_name: llm-router-local
+    working_dir: /app
     volumes:
       - .:/app
     depends_on:
-      - ollama
-      - ngrok
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  ollama:

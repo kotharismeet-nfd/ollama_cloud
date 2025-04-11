@@ -1,7 +1,11 @@
 FROM ollama/ollama
 
-COPY ./run-ollama.sh /tmp/run-ollama.sh
+WORKDIR /app
 
-WORKDIR /tmp
-RUN chmod +x ./run-ollama.sh
-# ENTRYPOINT ["/tmp/run-ollama.sh"]
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+COPY ollama.sh .
+
+RUN chmod +x ollama.sh
+
+ENTRYPOINT ["bash", "/app/ollama.sh"]
