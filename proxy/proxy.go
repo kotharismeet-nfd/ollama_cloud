@@ -28,7 +28,23 @@ func InitializeProxies(backends []model.BackendConfig, logger *zap.Logger) {
 	Proxies = make(map[string]*httputil.ReverseProxy)
 
 	for _, backend := range backends {
-		urlParsed, err := url.Parse(backend.BaseURL)
+		baseURL := backend.BaseURL
+        // Check if URL contains environment variables and expand them
+        if strings.Contains(baseURL, "${") {
+        	baseURL = os.Expand(baseURL, func(key string) string {
+				// Handle the format ${VAR:-default}
+				parts := strings.SplitN(key, ":-", 2)
+				if len(parts) == 2 {
+					val := os.Getenv(parts[0])
+					if val != "" {
+						return val
+					}
+					return parts[1]
+				}
+				return os.Getenv(key)
+        	})
+		}
+		urlParsed, err := url.Parse(baseURL)
 		if err != nil {
 			logger.Fatal("Error parsing URL for backend", zap.String("backend", backend.Name), zap.Error(err))
 		}

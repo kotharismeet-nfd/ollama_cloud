@@ -173,10 +173,6 @@ LLM-router can be set up to use individual API keys for each backend, or no key 
 
 Requests to LLM-router are secured with your `LLMROUTER_API_KEY` which you set in Cursor's OpenAI API Key field. This key is used to authenticate requests to your LLM-router, while the backend-specific API keys (like GROQ_API_KEY) are used by LLM-router to authenticate with the respective API providers.
 
-## MacOS Permissions
-
-When attempting to run LLM-router on MacOS, you may encounter permissions errors due to MacOS's Gatekeeper security feature. Here are several methods to resolve these issues and successfully launch the application.
-
 ### Build from Source
 If none of the above methods work, consider building the application from source:
 
